@@ -10,54 +10,13 @@ function h($str) {
     return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-// 新規ユーザーアカウント登録
-function registerUserAccount($name, $email, $password) {
-    $db = getDbConnection();
-    
-    $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
-    $stmt->execute([$email]);
-    if ($stmt->fetch()) {
-        return ['success' => false, 'message' => 'このメールアドレスは既に登録されています。'];
-    }
-
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $insertStmt = $db->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
-    $insertStmt->execute([$name, $email, $hashedPassword]);
-
-    return ['success' => true, 'user_id' => $db->lastInsertId()];
-}
-
-// ユーザーログイン処理
-function loginUserAccount($email, $password) {
-    $db = getDbConnection();
-    
-    $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
-
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        return ['success' => true];
-    }
-
-    return ['success' => false, 'message' => 'メールアドレスまたはパスワードが正しくありません。'];
-}
-
-// ログイン必須チェック
-function requireLogin() {
-    if (!isset($_SESSION['user_id'])) {
-        header('Location: login.php');
-        exit();
-    }
-}
-
-// DB接続関数（ローカル・クラウド自動判別）
+// DB接続関数（環境変数を優先）
 function getDbConnection() {
-    $host = getenv('MYSQLHOST') ?: DB_HOST;
-    $dbname = getenv('MYSQLDATABASE') ?: DB_NAME;
-    $user = getenv('MYSQLUSER') ?: DB_USER;
-    $pass = getenv('MYSQLPASSWORD') ?: DB_PASS;
-    $port = getenv('MYSQLPORT') ?: '3306';
+    $host = getenv('MYSQLHOST') ?: (defined('DB_HOST') ? DB_HOST : 'localhost');
+    $dbname = getenv('MYSQLDATABASE') ?: (defined('DB_NAME') ? DB_NAME : 'todo_db');
+    $user = getenv('MYSQLUSER') ?: (defined('DB_USER') ? DB_USER : 'root');
+    $pass = getenv('MYSQLPASSWORD') ?: (defined('DB_PASS') ? DB_PASS : '');
+    $port = getenv('MYSQLPORT') ?: (defined('DB_PORT') ? DB_PORT : '3306');
 
     try {
         $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
@@ -67,6 +26,51 @@ function getDbConnection() {
         ]);
     } catch (PDOException $e) {
         exit('DB接続エラー: ' . $e->getMessage());
+    }
+}
+
+// ★追加：ログイン中のユーザー情報を取得する関数
+function getCurrentUser() {
+    if (!isset($_SESSION['user_id'])) return null;
+    
+    $db = getDbConnection();
+    $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    return $stmt->fetch() ?: null;
+}
+
+// 新規ユーザーアカウント登録
+function registerUserAccount($name, $email, $password) {
+    $db = getDbConnection();
+    $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    if ($stmt->fetch()) {
+        return ['success' => false, 'message' => 'このメールアドレスは既に登録されています。'];
+    }
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    $insertStmt = $db->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
+    $insertStmt->execute([$name, $email, $hashedPassword]);
+    return ['success' => true, 'user_id' => $db->lastInsertId()];
+}
+
+// ユーザーログイン処理
+function loginUserAccount($email, $password) {
+    $db = getDbConnection();
+    $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        return ['success' => true];
+    }
+    return ['success' => false, 'message' => 'メールアドレスまたはパスワードが正しくありません。'];
+}
+
+// ログイン必須チェック
+function requireLogin() {
+    if (!isset($_SESSION['user_id'])) {
+        header('Location: login.php');
+        exit();
     }
 }
 
@@ -353,4 +357,4 @@ function getAiCharacterAdvice($userId, $levelInfo) {
 
     return $msg;
 }
-?>
+?
