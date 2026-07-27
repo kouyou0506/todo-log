@@ -1,0 +1,60 @@
+<?php
+require_once 'includes/functions.php';
+
+$errorMsg = '';
+
+// すでにログイン中ならメイン画面へ
+if (isset($_SESSION['user_id'])) {
+    header('Location: index.php');
+    exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
+
+    if ($email === '' || $password === '') {
+        $errorMsg = 'メールアドレスとパスワードを入力してください。';
+    } else {
+        $result = loginUserAccount($email, $password);
+        if ($result['success']) {
+            header('Location: index.php');
+            exit();
+        } else {
+            $errorMsg = $result['message'];
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ログイン - ToDo & Growth Log</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <h1>ログイン</h1>
+        <p>おかえりなさい！冒険の続きをはじめよう。</p>
+
+        <?php if ($errorMsg !== ''): ?>
+            <div class="error-msg"><?php echo h($errorMsg); ?></div>
+        <?php endif; ?>
+
+        <form method="POST" class="auth-form">
+            <div class="form-group">
+                <label>メールアドレス</label>
+                <input type="email" name="email" required placeholder="example@mail.com">
+            </div>
+            <div class="form-group">
+                <label>パスワード</label>
+                <input type="password" name="password" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn-primary">ログイン</button>
+        </form>
+
+        <p class="auth-link">アカウントをお持ちでない方は <a href="register.php">新規登録</a></p>
+    </div>
+</body>
+</html>
