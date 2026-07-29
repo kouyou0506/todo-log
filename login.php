@@ -53,7 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="submit" class="btn-primary">ログイン</button>
         </form>
-
+    <div style="margin-top: 20px; text-align: center; border-top: 1px solid #333; padding-top: 15px;">
+        <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 8px;">採用担当者様・お試しの方へ</p>
+        <form action="login.php" method="POST">
+            <!-- 事前に作ったゲストアカウントの情報をそのまま送信 -->
+            <input type="hidden" name="email" value="guest@example.com">
+            <input type="hidden" name="password" value="guest1234">
+            <button type="submit" style="background-color: #2ea44f; color: white; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">
+                👀 ワンクリックでお試しログイン
+            </button>
+        </form>
+    </div>
         <p class="auth-link">アカウントをお持ちでない方は <a href="register.php">新規登録</a></p>
     </div>
 </body>
