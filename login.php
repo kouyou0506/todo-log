@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form action="login.php" method="POST">
                 <input type="hidden" name="guest_login" value="1">
                 <button type="submit" style="background-color: #2ea44f; color: white; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">
-                    👀 ワンクリックでお試しログイン
+                    ワンクリックでお試しログイン
                 </button>
             </form>
         </div>
