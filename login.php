@@ -10,8 +10,34 @@ if (isset($_SESSION['user_id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
+    // 緑のゲストボタンが押された場合（一発ログイン＆自動アカウント作成）
+    if (isset($_POST['guest_login'])) {
+        $db = getDbConnection();
+        $guestEmail = 'guest@example.com';
+
+        // ゲストユーザーが既に存在するか確認
+        $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$guestEmail]);
+        $guestUser = $stmt->fetch();
+
+        if (!$guestUser) {
+            // いなければその場でDBに作成
+            $hashedPassword = password_hash('guest1234', PASSWORD_DEFAULT);
+            $insertStmt = $db->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
+            $insertStmt->execute(['ゲストユーザー', $guestEmail, $hashedPassword]);
+            $_SESSION['user_id'] = $db->lastInsertId();
+        } else {
+            // いればそのIDでセッションを開始
+            $_SESSION['user_id'] = $guestUser['id'];
+        }
+
+        header('Location: index.php');
+        exit();
+    }
+
+    // 通常のログイン処理
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
     if ($email === '' || $password === '') {
         $errorMsg = 'メールアドレスとパスワードを入力してください。';
@@ -53,17 +79,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="submit" class="btn-primary">ログイン</button>
         </form>
-    <div style="margin-top: 20px; text-align: center; border-top: 1px solid #333; padding-top: 15px;">
-        <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 8px;">採用担当者様・お試しの方へ</p>
-        <form action="login.php" method="POST">
-            <!-- 事前に作ったゲストアカウントの情報をそのまま送信 -->
-            <input type="hidden" name="email" value="guest@example.com">
-            <input type="hidden" name="password" value="guest1234">
-            <button type="submit" style="background-color: #2ea44f; color: white; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">
-                👀 ワンクリックでお試しログイン
-            </button>
-        </form>
-    </div>
+
+        <div style="margin-top: 20px; text-align: center; border-top: 1px solid #333; padding-top: 15px;">
+            <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 8px;">採用担当者様・お試しの方へ</p>
+            <form action="login.php" method="POST">
+                <input type="hidden" name="guest_login" value="1">
+                <button type="submit" style="background-color: #2ea44f; color: white; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">
+                    👀 ワンクリックでお試しログイン
+                </button>
+            </form>
+        </div>
+
         <p class="auth-link">アカウントをお持ちでない方は <a href="register.php">新規登録</a></p>
     </div>
 </body>
