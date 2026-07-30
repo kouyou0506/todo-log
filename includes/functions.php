@@ -10,11 +10,12 @@ function h($str) {
 }
 
 function getDbConnection() {
-    $host = getenv('MYSQLHOST') ?: (defined('DB_HOST') ? DB_HOST : 'localhost');
-    $dbname = getenv('MYSQLDATABASE') ?: (defined('DB_NAME') ? DB_NAME : 'todo_db');
-    $user = getenv('MYSQLUSER') ?: (defined('DB_USER') ? DB_USER : 'root');
-    $pass = getenv('MYSQLPASSWORD') ?: (defined('DB_PASS') ? DB_PASS : '');
-    $port = getenv('MYSQLPORT') ?: (defined('DB_PORT') ? DB_PORT : '3306');
+    // 1. 環境変数から優先的に取得（Render等のDB_HOST/MYSQLHOST両対応）
+    $host = getenv('DB_HOST') ?: (getenv('MYSQLHOST') ?: (defined('DB_HOST') ? DB_HOST : '127.0.0.1'));
+    $dbname = getenv('DB_NAME') ?: (getenv('MYSQLDATABASE') ?: (defined('DB_NAME') ? DB_NAME : 'todo_db'));
+    $user = getenv('DB_USER') ?: (getenv('MYSQLUSER') ?: (defined('DB_USER') ? DB_USER : 'root'));
+    $pass = getenv('DB_PASS') ?: (getenv('MYSQLPASSWORD') ?: (defined('DB_PASS') ? DB_PASS : ''));
+    $port = getenv('DB_PORT') ?: (getenv('MYSQLPORT') ?: (defined('DB_PORT') ? DB_PORT : '3306'));
 
     try {
         $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
